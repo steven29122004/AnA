@@ -1,5 +1,3 @@
-# Chứa Class Dijkstra, AStar (tự viết lại)
-# core/algorithms.py
 from core.base import Pathfinder
 from utils.heap import MinHeap
 
@@ -20,6 +18,7 @@ class DijkstraFinder(Pathfinder):
 
             for edge in self.graph.get(u, []):
                 v = edge['to']
+                # Chế độ 'dist' lấy khoảng cách cố định, 'time' lấy theo khung giờ
                 weight = edge['dist'] if mode == 'dist' else edge['times'][hour]
                 new_dist = current_cost + weight
                 
@@ -28,9 +27,9 @@ class DijkstraFinder(Pathfinder):
                     predecessors[v] = u
                     pq.push((new_dist, v))
 
-        # Tái thiết lập path (giống code cũ)
         path = []
         curr = end
         while curr:
-            path.append(curr); curr = predecessors[curr]
+            path.append(curr)
+            curr = predecessors[curr]
         return path[::-1], distances[end]

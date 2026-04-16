@@ -1,11 +1,8 @@
-# Class MinHeap tự chế (thay cho heapq)
-# utils/heap.py
 class MinHeap:
     def __init__(self):
         self.heap = []
 
     def push(self, item):
-        # item là tuple (cost, node_id)
         self.heap.append(item)
         self._bubble_up(len(self.heap) - 1)
 
