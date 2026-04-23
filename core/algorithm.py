@@ -1,65 +1,50 @@
-"""
-FILE: Core/algorithm.py
-AUTHOR: Nhan
-DESCRIPTION: A* algorithm implementation for finding the shortest path based on distance.
-"""
+from utility.heap import MinHeap
 
-from Utility.heap import MinHeap
+def dijkstra(graph, start, end, mode='distance', hour=0, avoid_nodes=None, avoid_edges=None):
+    if avoid_nodes is None: avoid_nodes = set()
+    if avoid_edges is None: avoid_edges = set()
 
-def get_heuristic(node_coords, current_node, goal_node):
-    """Calculates Euclidean distance between two nodes."""
-    (x1, y1) = node_coords[current_node]
-    (x2, y2) = node_coords[goal_node]
-    return ((x1 - x2)**2 + (y1 - y2)**2)**0.5
-
-def a_star_distance(graph_obj, start, goal, avoid_nodes=None, avoid_edges=None):
-    """
-    Finds the shortest path based on fixed distance.
-    Returns: (path_list, total_distance)
-    """
-    # Initialize constraints
-    avoid_nodes = set(avoid_nodes) if avoid_nodes else set()
-    avoid_edges = set(avoid_edges) if avoid_edges else set()
-
-    pq = MinHeap()
-    pq.push((0, start)) # (f_score, node)
+    distances = {node: float('inf') for node in graph.nodes}
+    previous = {node: None for node in graph.nodes}
+    distances[start] = 0
     
-    came_from = {start: None}
-    g_score = {start: 0} # Actual distance from start to current node
+    pq = MinHeap()
+    pq.push((0, start))
 
     while not pq.is_empty():
-        result = pq.pop()
-        if result is None: break
-        
-        _, current = result
+        current_cost, u = pq.pop()
 
-        if current == goal:
-            return reconstruct_path(came_from, current), g_score[current]
+        if u == end: break
+        if current_cost > distances[u]: continue
 
-        # Iterate through neighbors in the adjacency list
-        # Assuming neighbor_info is (distance, [24_hours_time_list])
-        for neighbor, info in graph_obj.adjacency_list[current].items():
-            distance = info[0]
+        for v, data in graph.adj.get(u, {}).items():
+            # Constraints: Avoid nodes/edges
+            if v in avoid_nodes: continue
+            if (u, v) in avoid_edges or (v, u) in avoid_edges: continue
 
-            # Check for avoid lists
-            if neighbor in avoid_nodes or (current, neighbor) in avoid_edges:
-                continue
+            # Select weight based on criteria
+            weight = data['distance'] if mode == 'distance' else data['time_list'][hour]
             
-            tentative_g_score = g_score[current] + distance
-            
-            if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                g_score[neighbor] = tentative_g_score
-                # f(n) = g(n) + h(n)
-                f_score = tentative_g_score + get_heuristic(graph_obj.node_coords, neighbor, goal)
-                came_from[neighbor] = current
-                pq.push((f_score, neighbor))
+            new_dist = current_cost + weight
+            if new_dist < distances[v]:
+                distances[v] = new_dist
+                previous[v] = u
+                pq.push((new_dist, v))
 
-    return None, float('inf')
+    # Path Reconstruction
+    path, curr = [], end
+    if distances[end] == float('inf'): return None, 0, 0
+    
+    while curr:
+        path.append(curr)
+        curr = previous[curr]
+    path.reverse()
 
-def reconstruct_path(came_from, current):
-    """Backtracks from goal to start to retrieve the path."""
-    path = []
-    while current is not None:
-        path.append(current)
-        current = came_from.get(current)
-    return path[::-1]
+    # Calculate totals
+    total_d, total_t = 0, 0
+    for i in range(len(path) - 1):
+        edge = graph.adj[path[i]][path[i+1]]
+        total_d += edge['distance']
+        total_t += edge['time_list'][hour]
+
+    return path, total_d, total_t
