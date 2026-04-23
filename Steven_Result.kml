@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-<Document>
-    <Style id="routeStyle"><LineStyle><color>ff0000ff</color><width>5</width></LineStyle></Style>
-    <Placemark><styleUrl>#routeStyle</styleUrl><LineString><coordinates>106.6601,10.7626,0
-106.7,10.775,0
-106.701,10.8,0</coordinates></LineString></Placemark></Document></kml>
