@@ -1,42 +1,109 @@
 class MinHeap:
-    def __init__(self):
-        self.heap = []
+    def __init__(self, data=None):
+        """
+        If data is given (a list), build a heap from it.
+        Otherwise start with an empty heap.
+        """
+        if data is None:
+            self.heap = []
+        else:
+            self.heap = list(data)
+            self.heapify()   # build the heap in-place
 
-    def push(self, element):
-        # element: (priority, task_data)
-        self.heap.append(element)
+    # --- index helpers ---
+    def _parent(self, i): 
+        return (i - 1) // 2
+    
+    def _left(self, i):   
+        return 2 * i + 1
+    
+    def _right(self, i):  
+        return 2 * i + 2
+
+    # --- public operations ---
+    def insert(self, x):
+        """Insert element x into the heap."""
+        self.heap.append(x)
         self._sift_up(len(self.heap) - 1)
 
-    def pop(self):
-        if len(self.heap) == 0:
-            return None
-        if len(self.heap) == 1:
-            return self.heap.pop()
-        
-        root = self.heap[0]
-        self.heap[0] = self.heap.pop()
-        self._sift_down(0)
-        return root
+    def extract_min(self):
+        """Remove and return the smallest element."""
+        if not self.heap:
+            raise IndexError("extract_min from empty heap")
+        min_val = self.heap[0]
+        last = self.heap.pop()
+        if self.heap:          # if not empty afterwards
+            self.heap[0] = last
+            self._sift_down(0)
+        return min_val
 
-    def _sift_up(self, idx):
-        parent = (idx - 1) // 2
-        if idx > 0 and self.heap[idx][0] < self.heap[parent][0]:
-            self.heap[idx], self.heap[parent] = self.heap[parent], self.heap[idx]
-            self._sift_up(parent)
+    def peek(self):
+        """Return the smallest element without removing it."""
+        if not self.heap:
+            raise IndexError("peek from empty heap")
+        return self.heap[0]
 
-    def _sift_down(self, idx):
-        smallest = idx
-        left = 2 * idx + 1
-        right = 2 * idx + 2
-        
-        if left < len(self.heap) and self.heap[left][0] < self.heap[smallest][0]:
-            smallest = left
-        if right < len(self.heap) and self.heap[right][0] < self.heap[smallest][0]:
-            smallest = right
-            
-        if smallest != idx:
-            self.heap[idx], self.heap[smallest] = self.heap[smallest], self.heap[idx]
-            self._sift_down(smallest)
+    def heapify(self):
+        """
+        Turn the current list into a valid min-heap in-place.
+        Time complexity: O(n).
+        """
+        n = len(self.heap)
+        # start from last internal node down to root
+        for i in range((n // 2) - 1, -1, -1):
+            self._sift_down(i)
 
-    def is_empty(self):
-        return len(self.heap) == 0
+    def delete(self, i):
+        """
+        Delete the element at index i.
+        Raises IndexError if i is out of range.
+        """
+        n = len(self.heap)
+        if i < 0 or i >= n:
+            raise IndexError("delete index out of range")
+
+        # Move last element to position i and remove old last
+        last = self.heap.pop()
+        if i == n - 1:
+            # we just removed the last element; nothing more to do
+            return
+
+        self.heap[i] = last
+
+        # Restore heap property: depending on value, sift up or down
+        # Try sift_up first; if no movement, then sift_down.
+        parent = self._parent(i)
+        if i > 0 and self.heap[i] < self.heap[parent]:
+            self._sift_up(i)
+        else:
+            self._sift_down(i)
+
+    # --- internal helpers ---
+    def _sift_up(self, i):
+        """Move element at index i up to restore heap property."""
+        while i > 0:
+            p = self._parent(i)
+            if self.heap[i] < self.heap[p]:
+                self.heap[i], self.heap[p] = self.heap[p], self.heap[i]
+                i = p
+            else:
+                break
+
+    def _sift_down(self, i):
+        """Move element at index i down to restore heap property."""
+        n = len(self.heap)
+        while True:
+            left = self._left(i)
+            right = self._right(i)
+            smallest = i
+
+            if left < n and self.heap[left] < self.heap[smallest]:
+                smallest = left
+            if right < n and self.heap[right] < self.heap[smallest]:
+                smallest = right
+
+            if smallest == i:
+                break
+
+            self.heap[i], self.heap[smallest] = self.heap[smallest], self.heap[i]
+            i = smallest

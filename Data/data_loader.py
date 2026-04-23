@@ -1,31 +1,50 @@
-import json
-import os
+import random
 from core.graph import Graph
 
-def load_map_data(file_path):
+def generate_map():
     """
-    Đọc dữ liệu từ file JSON và nạp vào đối tượng Graph.
+    Tạo đồ thị ít nhất 1000 nodes theo dạng mạng lưới đường phố (Grid Network).
+    Size: 32x32 = 1024 nodes.
     """
     graph = Graph()
+    grid_size = 32 
     
-    if not os.path.exists(file_path):
-        print(f"Error: File {file_path} not found.")
-        return graph
+    print(f"[*] Generating realistic road network ({grid_size}x{grid_size} nodes)...")
 
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f) # Đọc toàn bộ file JSON thành list
+    # 1. Tạo Nodes với tọa độ X, Y
+    for x in range(grid_size):
+        for y in range(grid_size):
+            node_id = f"N_{x}_{y}"
+            # Mỗi block cách nhau 2.5 km
+            graph.add_node(node_id, x * 2.5, y * 2.5)
+
+    # 2. Tạo Edges (Đường đi nối các block liền kề)
+    for x in range(grid_size):
+        for y in range(grid_size):
+            u = f"N_{x}_{y}"
             
-            for edge in data:
-                u = str(edge['u']).strip().upper()
-                v = str(edge['v']).strip().upper()
-                dist = float(edge['distance'])
-                time_list = edge['time_list']
+            # Chỉ nối sang phải và xuống dưới để tránh trùng lặp 
+            # (Hàm add_edge trong graph.py đã lo việc nối 2 chiều)
+            neighbors = []
+            if x < grid_size - 1: neighbors.append(f"N_{x+1}_{y}")
+            if y < grid_size - 1: neighbors.append(f"N_{x}_{y+1}")
+
+            for v in neighbors:
+                # 15% khả năng bị chặn (không có đường nối)
+                if random.random() < 0.15:
+                    continue
+                    
+                # Khoảng cách dao động từ 2.0 đến 3.5 km
+                distance = random.uniform(2.0, 3.5)
                 
-                # Nạp vào đồ thị
-                graph.add_edge(u, v, dist, time_list)
+                # Tạo 24 mốc thời gian. Giả sử ban đêm (0-5h) kẹt xe ít, ban ngày (6-20h) kẹt nhiều
+                times = []
+                for hour in range(24):
+                    if 6 <= hour <= 20:
+                        times.append(random.uniform(5.0, 15.0)) # Phút
+                    else:
+                        times.append(random.uniform(2.5, 6.0))  # Phút
                 
-    except Exception as e:
-        print(f"Error parsing JSON: {e}")
-            
+                graph.add_edge(u, v, distance, times)
+
     return graph
