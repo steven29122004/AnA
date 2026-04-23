@@ -31,8 +31,8 @@ def generate_map():
 
             for v in neighbors:
                 # 15% khả năng bị chặn (không có đường nối)
-                if random.random() < 0.15:
-                    continue
+                # if random.random() < 0.15:
+                    # continue
                     
                 # Khoảng cách dao động từ 2.0 đến 3.5 km
                 distance = random.uniform(2.0, 3.5)
